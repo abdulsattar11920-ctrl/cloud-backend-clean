@@ -33,8 +33,7 @@ def download():
         "outtmpl": output_path,
         "restrictfilenames": True,
 
-        # cookies (cloud jugaar)
-        "cookiefile": COOKIES_FILE,
+        
 
         # low cpu + compatibility
         "postprocessor_args": [
