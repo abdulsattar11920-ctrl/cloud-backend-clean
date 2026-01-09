@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.env/
+
+# Media / downloads
+downloads/
+*.mp4
+*.part
+
+# OS
+.DS_Store
+Thumbs.db
