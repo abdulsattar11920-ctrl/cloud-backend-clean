@@ -2,208 +2,57 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Universal Downloader</title>
-
-    <link rel="icon" type="image/png" href="/static/iflogo.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/static/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
 
-    <!-- HEADER -->
-    <header class="topbar">
-        <div class="brand">
-            <img src="/static/logo.png" class="logo" alt="Universal Downloader Logo">
-        </div>
-    </header>
+    <div class="container">
+        <h1>Universal Downloader</h1>
 
-    <main class="container">
+        <input id="url" type="text" placeholder="Paste video link here">
 
-        <!-- INPUT -->
-        <section class="card">
-            <label class="label">Paste video link</label>
-            <input id="url" type="text" placeholder="YouTube, TikTok, Instagram, Pinterest…" />
-            <button class="primary" onclick="fetchPreview()">Fetch Video</button>
-        </section>
+        <button onclick="startDownload()">Download Video</button>
 
-        <!-- STATUS -->
-        <section class="card status">
-            <h3>Status</h3>
-            <div id="statusLog">
-                <div class="log">🟢 Ready</div>
-            </div>
-        </section>
-
-        <!-- PREVIEW -->
-        <section id="preview" class="card hidden">
-            <div class="preview-grid">
-                <img id="thumb" alt="Video Thumbnail" />
-                <div class="meta">
-                    <h2 id="title"></h2>
-                    <p id="channel"></p>
-                    <p id="duration"></p>
-                </div>
-            </div>
-
-            <div class="options">
-                <div>
-                    <label class="label">Video Quality</label>
-                    <select id="quality">
-                        <option value="1080">1080p (Full HD)</option>
-                        <option value="720">720p (HD)</option>
-                        <option value="480">480p</option>
-                    </select>
-                </div>
-
-                <label class="check">
-                    <input type="checkbox" id="subs" />
-                    Download subtitles (if available)
-                </label>
-            </div>
-
-            <button class="success" onclick="startDownload()">Download Video</button>
-
-            <!-- SCRIPT BUTTON (YOUTUBE ONLY) -->
-            <button id="scriptBtn" class="primary" onclick="downloadScript()">
-                Download Script (DOCX)
-            </button>
-        </section>
-
-        <!-- DESCRIPTION -->
-        <section class="card description">
-            <h3>About Universal Downloader</h3>
-            <p>
-                Universal Downloader is a powerful, clean and easy-to-use tool designed
-                to download videos from multiple platforms including YouTube, TikTok,
-                Instagram, Pinterest and more.
-            </p>
-            <p>
-                You can preview videos, choose quality, download subtitles and save
-                content directly to your system without ads or unnecessary clutter.
-            </p>
-            <p>
-                Built with performance and simplicity in mind.
-            </p>
-        </section>
-
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="footer no-select">
-        Developed by Abdul Sattar
-    </footer>
+        <p id="status">🟢 Ready</p>
+    </div>
 
     <script>
-        function addLog(text) {
-            const box = document.getElementById("statusLog");
-            const div = document.createElement("div");
-            div.className = "log";
-            div.innerText = text;
-            box.prepend(div);
-        }
-
-        function fetchPreview() {
-            const url = document.getElementById("url").value.trim();
-            if (!url) {
-                addLog("❌ Paste a valid link");
-                return;
-            }
-
-            addLog("🔍 Fetching video info…");
-
-            fetch("/preview", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: "url=" + encodeURIComponent(url)
-            })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.status === "success") {
-                        document.getElementById("thumb").src = d.thumbnail;
-                        document.getElementById("title").innerText = d.title;
-                        document.getElementById("channel").innerText = "Channel: " + d.uploader;
-                        document.getElementById("duration").innerText =
-                            "Duration: " + Math.floor(d.duration / 60) + ":" +
-                            (d.duration % 60).toString().padStart(2, "0");
-
-                        document.getElementById("preview").classList.remove("hidden");
-
-                        const scriptBtn = document.getElementById("scriptBtn");
-                        if (d.is_youtube) {
-                            scriptBtn.style.display = "block";
-                        } else {
-                            scriptBtn.style.display = "none";
-                            addLog("ℹ️ Script download available for YouTube only");
-                        }
-
-                        addLog("✅ Video loaded");
-                    } else {
-                        addLog("❌ " + d.msg);
-                    }
-                });
-        }
-
         function startDownload() {
             const url = document.getElementById("url").value.trim();
-            const quality = document.getElementById("quality").value;
-            const subs = document.getElementById("subs").checked;
+            const status = document.getElementById("status");
 
             if (!url) {
-                addLog("❌ No URL to download");
+                status.innerText = "❌ Please paste a link";
                 return;
             }
 
-            addLog("⬇️ Download request sent…");
+            status.innerText = "⬇️ Downloading... please wait";
 
             fetch("/download", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
-                body:
-                    "url=" + encodeURIComponent(url) +
-                    "&quality=" + encodeURIComponent(quality) +
-                    "&subs=" + subs
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === "success") {
-                        addLog("✅ Download started (check terminal)");
-                    } else {
-                        addLog("❌ " + data.msg);
-                    }
-                })
-                .catch(() => {
-                    addLog("❌ Network error");
-                });
-        }
-
-        function downloadScript() {
-            const url = document.getElementById("url").value.trim();
-
-            if (!url) {
-                addLog("❌ No URL for script");
-                return;
-            }
-
-            addLog("📄 Script generation started…");
-
-            fetch("/script", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
                 body: "url=" + encodeURIComponent(url)
             })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === "success") {
-                        addLog("✅ Script is being generated");
-                    } else {
-                        addLog("❌ " + data.msg);
-                    }
+                .then(res => {
+                    if (!res.ok) throw new Error("Download failed");
+                    return res.blob();
+                })
+                .then(blob => {
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(blob);
+                    a.download = "video.mp4";
+                    a.click();
+
+                    status.innerText = "✅ Video download ho gayi";
+                })
+                .catch(() => {
+                    status.innerText = "❌ Error downloading video";
                 });
         }
     </script>
